@@ -5,12 +5,15 @@ import { NewsArticle, EvaluationResult } from "../types";
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
 
 /**
- * Fetches a random article with high performance.
- * Uses direct JSON mode to minimize parsing time and latency.
+ * Fetches a high-quality article for training.
+ * Optimized for speed using Google Search grounding + Direct JSON Schema.
  */
 export const fetchRandomChosunArticle = async (): Promise<NewsArticle> => {
-  const prompt = `조선일보(chosun.com)의 오늘자 최신 뉴스 기사 중 하나를 선정해서 제목, URL, 본문 내용을 가져와줘. 
-  반드시 JSON 형식으로만 응답해야 해.`;
+  // Ultra-optimized prompt to get the full body in one go
+  const prompt = `Search for a recent major news article from chosun.com today.
+  Provide the result strictly in JSON with title, full article content, and original URL. 
+  The content must be the actual news body (at least 3-4 paragraphs). 
+  Language: Korean.`;
   
   const response = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',
@@ -18,8 +21,8 @@ export const fetchRandomChosunArticle = async (): Promise<NewsArticle> => {
     config: {
       tools: [{ googleSearch: {} }],
       responseMimeType: "application/json",
-      thinkingConfig: { thinkingBudget: 0 },
-      temperature: 0.2,
+      thinkingConfig: { thinkingBudget: 0 }, // Disable thinking for max speed
+      temperature: 0.1,
       responseSchema: {
         type: Type.OBJECT,
         properties: {
@@ -35,24 +38,20 @@ export const fetchRandomChosunArticle = async (): Promise<NewsArticle> => {
   try {
     const result = JSON.parse(response.text || '{}');
     return {
-      title: result.title || "기사를 찾을 수 없습니다.",
-      content: result.content || "본문 내용을 불러오는 데 실패했습니다.",
+      title: result.title || "기사를 가져올 수 없습니다.",
+      content: result.content || "실시간 검색 결과를 가져오는 데 실패했습니다. 다시 시도해 주세요.",
       url: result.url || "https://www.chosun.com",
       source: "조선일보"
     };
   } catch (e) {
-    console.error("JSON Parsing Error", e);
-    return {
-      title: "오류 발생",
-      content: "기사 데이터를 파싱하는 중 오류가 발생했습니다.",
-      url: "https://www.chosun.com",
-      source: "조선일보"
-    };
+    console.error("Fast Fetch Error", e);
+    throw new Error("Article data parsing failed.");
   }
 };
 
 /**
  * Evaluates summaries and estimates literacy age.
+ * Optimized for logic and speed.
  */
 export const evaluateSummaries = async (
   article: NewsArticle,
@@ -60,12 +59,17 @@ export const evaluateSummaries = async (
   threeLines: string
 ): Promise<EvaluationResult> => {
   const prompt = `
-    기사: ${article.title}
-    본문: ${article.content}
-    사용자 요약1(한문장): ${oneSentence}
-    사용자 요약2(3줄): ${threeLines}
+    Article Title: ${article.title}
+    Article Content: ${article.content}
+    User Summary 1 (1-Sentence): ${oneSentence}
+    User Summary 2 (3-Lines): ${threeLines}
     
-    위 요약들을 분석해서 문해력 점수와 추정 나이(10~80세)를 JSON으로 알려줘.
+    Task: Evaluate the summaries above for accuracy, clarity, and depth.
+    1. Score each (0-100).
+    2. Provide coaching comments in Korean.
+    3. Suggest a perfect professional summary in Korean.
+    4. Estimate the user's literacy age based on their writing style (10 to 80).
+    Return strictly as JSON.
   `;
 
   const response = await ai.models.generateContent({
