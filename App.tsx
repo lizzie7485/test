@@ -19,7 +19,7 @@ const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [countdown, setCountdown] = useState(10);
 
-  // Smooth countdown logic
+  // Smooth countdown logic for fetching state
   useEffect(() => {
     let timer: number;
     if (step === TrainingStep.FETCHING && countdown > 0) {
@@ -33,7 +33,6 @@ const App: React.FC = () => {
   }, [step, countdown]);
 
   const startNewSession = useCallback(async () => {
-    // Reset states
     setArticle(null);
     setOneSentence('');
     setThreeLines('');
@@ -44,13 +43,11 @@ const App: React.FC = () => {
     setLoading(true);
 
     try {
-      // Faster fetching with optimized prompt
       const data = await fetchRandomChosunArticle();
       setArticle(data);
-      // Immediately move to reading step when data arrives
       setStep(TrainingStep.READING);
     } catch (err: any) {
-      setError("기사를 실시간으로 가져오는 데 실패했습니다. 다시 시도해 주세요.");
+      setError("실시간 뉴스를 가져오지 못했습니다. 잠시 후 다시 시도해 주세요.");
       setStep(TrainingStep.INTRO);
     } finally {
       setLoading(false);
@@ -65,7 +62,7 @@ const App: React.FC = () => {
       setFeedback(result);
       setStep(TrainingStep.FEEDBACK);
     } catch (err: any) {
-      setError("AI 분석 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.");
+      setError("AI 분석 중 오류가 발생했습니다. 다시 시도해 주세요.");
     } finally {
       setLoading(false);
     }
@@ -158,10 +155,13 @@ const App: React.FC = () => {
                 </div>
               </div>
             ) : <div style={{ borderTopColor: 'transparent', borderColor: BRAND_COLOR }} className="w-16 h-16 border-4 rounded-full animate-spin mb-8"></div>}
-            <h3 className="text-2xl font-bold text-slate-800 mb-3">
-              {step === TrainingStep.FETCHING ? '오늘의 핫한 뉴스를 찾는 중...' : 'AI가 요약 내용을 분석 중...'}
-            </h3>
-            <p className="text-slate-400 font-medium">잠시만 기다려주세요. 최적의 훈련 데이터를 구성하고 있습니다.</p>
+            
+            <div className="animate-softSway">
+              <h3 className="text-2xl font-bold text-slate-800 mb-3">
+                {step === TrainingStep.FETCHING ? '오늘의 핫한 뉴스를 찾는 중...' : 'AI가 요약 내용을 분석 중...'}
+              </h3>
+              <p className="text-slate-400 font-medium">잠시만 기다려주세요. 최적의 훈련 데이터를 구성하고 있습니다.</p>
+            </div>
           </div>
         )}
 
@@ -286,7 +286,13 @@ const App: React.FC = () => {
           from { opacity: 0; transform: translateY(30px); } 
           to { opacity: 1; transform: translateY(0); } 
         }
+        @keyframes softSway {
+          0%, 100% { transform: translateX(0) rotate(0deg); }
+          25% { transform: translateX(-3px) rotate(-0.5deg); }
+          75% { transform: translateX(3px) rotate(0.5deg); }
+        }
         .animate-fadeIn { animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .animate-softSway { animation: softSway 2s ease-in-out infinite; }
         .serif-text { font-family: 'Noto Serif KR', serif; }
       `}</style>
     </div>
