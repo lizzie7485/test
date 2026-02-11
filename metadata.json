@@ -1,0 +1,5 @@
+{
+  "name": "당신의 문해력은 몇 살일까요? ",
+  "description": "A focused training application that helps users improve their news comprehension by fetching real articles and challenging them to provide concise 1-sentence and 3-line summaries.",
+  "requestFramePermissions": []
+}
